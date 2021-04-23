@@ -3,12 +3,10 @@ import bcrypt from "bcrypt";
 import con from "../../../db";
 import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
-
 import * as dotenv from "dotenv";
 dotenv.config({ path: __dirname + "/config.env" });
 
 export const register = async (req: Request, res: Response) => {
-  console.log(req.headers.host);
 
   if (
     req.body.user_type &&
@@ -182,7 +180,9 @@ export const forgotPassword = async (req: Request, res: Response) => {
                 token: token,
               };
               con.query(
-                "INSERT INTO tron_forgot_passsword SET ?",[resetPassword],function (error, results) {
+                "INSERT INTO tron_forgot_passsword SET ?",
+                [resetPassword],
+                function (error, results) {
                   if (result) {
                     return res.status(200).json({
                       status: "success",
@@ -214,11 +214,13 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
 export const resetPassword = async (req: Request, res: Response) => {
   const { id, token } = req.params;
-  
-  con.query("select * from tron_forgot_password where token ?",token, function(err, result) {
-    if(result.length > 0)
-    {
-      
+
+  con.query(
+    "select * from tron_forgot_password where token ?",
+    token,
+    function (err, result) {
+      if (result.length > 0) {
+      }
     }
-  })
-}
+  );
+};
