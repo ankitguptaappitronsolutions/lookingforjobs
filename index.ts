@@ -19,4 +19,9 @@ app.use('*', (req, res, next) => {
  res.status(400).json({status:"failed", data: null, message:"undefine route"});
 });
 
-app.listen(4300, () => console.log(`Example app listening on port 4300!`));
+
+const port = process.env.PORT || 4300;
+app.listen(port, () => {
+    console.log(`Application is running on port ${port}`);
+});
+
