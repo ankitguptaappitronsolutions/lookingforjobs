@@ -1,13 +1,10 @@
 import { Request, Response } from "express";
 import con from "../../../db";
 import * as dotenv from "dotenv";
+import moment from "moment";
 
 var slug = require('slug');
-
-
 dotenv.config({ path: __dirname + "/config.env" });
-
-
 
 export const addResume = async (req: Request, res: Response) => {
   const job = {
@@ -83,3 +80,86 @@ export const viewjob = async (req: Request, res: Response) => {
   );
 
 }
+
+export const uploadResume =  async (req: Request, res: Response) => {
+  if(req.file === undefined)
+  {
+    return res.status(404).json({ message: "Please upload a file first"})
+  }
+  
+console.log(req.file);
+
+const resumeData = {
+  user_id: req.body.userId,
+  name: req.body.name,
+  filename: req.file.path,
+  created_at: moment().format('YYYY-MM-DD h:mm:ss'),
+  updated_at: moment().format('YYYY-MM-DD h:mm:ss')
+};
+
+  try {
+    con.query(
+      "INSERT INTO tron_resumes SET ?",
+      [resumeData],
+      function (error, data) {
+  console.log(error);
+  
+          if(data){
+            return res.status(201).json({
+              status:"success",
+              data,
+               message: "Please uploaded successfully"
+              })
+          }
+          else{
+              return res.status(400).json({ message: "Image uploading error"});
+          }
+        })
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+};}
+
+export const getAllUserResume = async (req: Request, res: Response) => {
+  
+  if(req.params.id){
+    con.query(
+      "SELECT * FROM tron_resumes where user_id = ?",[req.params.id], function (error, data) {
+        if(!error){
+          if (data.length > 0) {
+            return res.status(200).json({
+              status: "success",
+              data,
+              message: "Resume Listing",
+            });
+          } else {
+    
+            res.status(404).json({
+              status: "failed",
+              data: null,
+              messgae: "Failed to fetch Resume listing.",
+            });
+          }
+        }
+        else{
+          res.status(400).json({
+            status: "failed",
+            data: null,
+            messgae: "Got some error in query",
+          });
+        }
+      }
+    );
+  }
+  else {
+    res.status(401).json({
+      status: "failed",
+      data: null,
+      messgae: "enter the userID",
+    });
+  }
+ 
+
+}
+
+

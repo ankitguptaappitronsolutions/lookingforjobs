@@ -5,7 +5,12 @@ import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
 
 import * as dotenv from "dotenv";
+import { json } from "body-parser";
 dotenv.config({ path: __dirname + "/config.env" });
+
+var runner = require("child_process");
+
+
 
 export const register = async (req: Request, res: Response) => {
   console.log(req.headers.host);
@@ -42,7 +47,7 @@ export const register = async (req: Request, res: Response) => {
                 message: "email is already registered",
               });
             } else {
-              const saltRounds = 10;
+              const saltRounds = 13;
               const myPlaintextPassword = req.body.password;
 
               bcrypt.genSalt(saltRounds, function (err, salt) {
@@ -127,6 +132,7 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
+
 export const forgotPassword = async (req: Request, res: Response) => {
   const email = req.body.email;
   if (email) {
@@ -182,7 +188,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
                 token: token,
               };
               con.query(
-                "INSERT INTO tron_forgot_passsword SET ?",[resetPassword],function (error, results) {
+                "INSERT INTO tron_forgot_passsword SET ?", [resetPassword], function (error, results) {
                   if (result) {
                     return res.status(200).json({
                       status: "success",
@@ -214,11 +220,64 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
 export const resetPassword = async (req: Request, res: Response) => {
   const { id, token } = req.params;
-  
-  con.query("select * from tron_forgot_password where token ?",token, function(err, result) {
-    if(result.length > 0)
-    {
-      
+
+  con.query("select * from tron_forgot_password where token ?", token, function (err, result) {
+    if (result.length > 0) {
+
     }
   })
+}
+
+export const login = async (req: Request, res: Response) => {
+
+  const email = req.body.email;
+  const password = req.body.password;
+  if (!email || !password) {
+    return res.status(401).json("please provide email and password");
+  }
+  con.query('SELECT * FROM tron_user  WHERE email = ? ', [email], function (error, data) {
+    if (error) {
+      res.json({
+        status: "fail",
+        message: 'there are some error with query'
+      })
+    }
+
+
+    else {
+
+      if (data.length > 0) {
+        const passwordEnteredByUser = password;
+
+        const hash = data[0].password_hash;
+        var hashPassword = hash.replace("$2y", "$2b");
+
+        const decryptedString = bcrypt.compare(password,
+          data[0].password_hash);
+        bcrypt.compare(passwordEnteredByUser, hashPassword, function (err, isMatch) {
+          if (err) {
+            res.status(402).json({
+              status: false,
+              message: "Email and password does not match"
+            });
+          } else if (!isMatch) {
+            res.status(402).json({
+              status: false,
+              message: "Email and password does not match"
+            });
+          } else {
+            res.status(200).json({
+              status: true,
+              message: 'successfully authenticated',
+              data
+            })
+          }
+        })
+
+
+      }
+
+    }
+  });
+
 }
